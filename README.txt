@@ -3,6 +3,6 @@ python setup.py install
 
 Then run the commands below
 sudo apt-get install dnsmasq
-sudo apt-get install dhcpd-server
+sudo apt-get install dhcp3-server
 
 Then run the script named ETMITM.sh
