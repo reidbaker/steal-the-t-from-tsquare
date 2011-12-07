@@ -1,0 +1,4 @@
+## files that are the output from dsniff##
+##########################################
+*.log
+dnsniff.services
