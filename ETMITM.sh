@@ -10,7 +10,7 @@ echo "Would you like to add the needed content? (y/n, c to continue anyways)"
 read -e CONFIRM
 if [[ "$CONFIRM" == "y" || "$CONFIRM" == "Y" ]]
     then echo "" >> /etc/dhcp3/dhcpd.conf
-    echo "option domain-name-servers 192.168.179.1;" >> /etc/dhcp3/dhcpd.conf
+    echo "option domain-name-servers 192.168.179.1;" >> /etc/dhcp3/dhcpd.conf #might be able to delete this line
     echo "subnet 192.168.179.0 netmask 255.255.255.0 {" >> /etc/dhcp3/dhcpd.conf
     echo "range 192.168.179.10 192.168.179.100;" >> /etc/dhcp3/dhcpd.conf
     echo "option routers 192.168.179.1;" >> /etc/dhcp3/dhcpd.conf
@@ -70,7 +70,7 @@ sleep 4
 #echo 'Configuring ip forwarding'
 #echo "1" > /proc/sys/net/ipv4/ip_forward
 
-iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 10000
+iptables --table nat --append PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 10000
 iptables --table nat --append POSTROUTING --out-interface $iface -j MASQUERADE
 iptables --append FORWARD --in-interface at0 -j ACCEPT
 
