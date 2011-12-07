@@ -1,5 +1,7 @@
-How to install ettercap
+First extract sslstrip and run the command below as root.
+python setup.py install
 
-dpkg -i ettercap-common_0.7.3-1.4ubuntu1~rse0_i386.deb
-dpkg -i ettercap-gtk_0.7.3-1.4ubuntu1~rse0_i386.deb
+Then run the command below
+sudo apt-get install dnsmasq
 
+Then run the script named ETMITM.sh
