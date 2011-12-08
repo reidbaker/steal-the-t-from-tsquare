@@ -16,3 +16,5 @@ sudo apt-get install dhcp3-server
 sudo apt-get install ettercap
 
 Then run the script named ETMITM.sh
+
+If you mess up running ETMITM.sh you have to restart the computer
