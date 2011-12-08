@@ -1,4 +1,13 @@
-First extract sslstrip and run the command below as root.
+
+
+Easy way 
+    use the installer as root
+    ./installer.sh
+Hard way
+
+First extract sslstrip and in the directory you extract to 
+run the command below as root.
+
 python setup.py install
 
 Then run the commands below
