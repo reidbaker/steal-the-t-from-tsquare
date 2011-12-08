@@ -1,8 +1,13 @@
 #----------------------------------------------------------------------#
-# This script is what I have taken from a script I found on the old BT
-# forums by Deathray. I modified it to fit my needs. -l3g10n
+#This script has had many owners
+# Deathray
+# l3g10n
+# BakedDeetz
+# hammer13
+# twrobel3
+# TheDekel
+# VOIDCRUSHER
 
-#Actually -l3g10n sucks
 #----------------------------------------------------------------------#
 if ! grep 192.168.179.1 /etc/dhcp3/dhcpd.conf > /dev/null
 then echo "Did not find expected dhcp settings for 192.168.179.1 in dhcpd.conf"
